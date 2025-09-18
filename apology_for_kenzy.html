@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>رسالة اعتذار لـ كنزي</title>
+<style>
+  :root{--bg:#fff7f9;--card:#fff;--accent:#ff6b8a;--muted:#6b6b6b}
+  *{box-sizing:border-box;font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
+  body{margin:0;background:linear-gradient(180deg,#fff7f9 0%, #fff1f4 100%);color:#222;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;direction:rtl}
+  .wrap{max-width:900px;width:100%;background:var(--card);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,0.08);overflow:hidden;display:grid;grid-template-columns:1fr 380px}
+  @media(max-width:880px){.wrap{grid-template-columns:1fr;padding:18px}}
+  .left{padding:28px}
+  .title{font-size:28px;margin:0 0 6px;color:var(--accent);letter-spacing:0.4px}
+  .subtitle{color:var(--muted);margin:0 0 18px}
+  .photo{width:100%;height:220px;border-radius:12px;background:linear-gradient(135deg,#ffd7e0,#fff);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .photo img{width:100%;height:100%;object-fit:cover}
+  textarea{width:100%;min-height:140px;padding:12px;border-radius:10px;border:1px solid #eee;font-size:16px;resize:vertical;direction:rtl;text-align:right}
+  .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+  .ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .preview{margin-top:14px;padding:12px;border-radius:10px;background:#fff6f8;border:1px dashed #ffd3df;color:#333;white-space:pre-wrap;text-align:right}
+  .right{background:linear-gradient(180deg,#fff1f4,#fff7fb);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .hearts{position:relative;width:200px;height:200px}
+  .big-heart{font-size:74px;color:var(--accent);filter:drop-shadow(0 6px 18px rgba(255,107,138,0.2))}
+  footer{font-size:13px;color:#8a8a8a;margin-top:8px;text-align:center}
+  .result-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:60}
+  .card{background:#fff;padding:18px;border-radius:12px;max-width:540px;width:92%;text-align:center;direction:rtl}
+  .share-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  a.share{display:inline-block;padding:10px 14px;border-radius:10px;text-decoration:none;font-weight:700}
+  a.wh{background:#25D366;color:#fff}
+  a.copy{background:#ff6b8a;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap" role="main">
+  <div class="left">
+    <h1 class="title">رسالة صغيرة ليها</h1>
+    <p class="subtitle">الرسالة مكتوبة بالفعل تحت — تقدر تعدلها أو تبعتها زي ما هي.</p>
+
+    <div class="photo" id="photoLabel">
+      <img id="photo" alt="صورتكم" src="" style="display:none"/>
+      <div id="photoPlaceholder" style="text-align:center;color:#c04b67">
+        <div style="font-size:28px">💖</div>
+        <div>اضغط هنا لإضافة صورة (اختياري)</div>
+      </div>
+      <input id="file" type="file" accept="image/*" style="display:none">
+    </div>
+
+    <div style="margin-top:16px">
+      <label for="message" style="font-weight:700;display:block;margin-bottom:6px">نص الرسالة</label>
+      <textarea id="message">اسف يا كنوزتي يا حبيبتي</textarea>
+      <div class="controls" style="margin-top:12px">
+        <button id="show">عرض</button>
+        <button class="ghost" id="save">حفظ ملف</button>
+        <button class="ghost" id="tips">نصايح</button>
+      </div>
+      <div class="preview" id="preview" style="display:none"></div>
+      <footer>زر "شارك على واتساب" يفتح واتساب مع نص الرسالة جاهز.</footer>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="hearts" aria-hidden="true">
+      <div class="big-heart">❤️</div>
+    </div>
+
+    <div style="text-align:center">
+      <div style="font-weight:800;font-size:20px;color:#c43f63">لو محتاج تبعتها بسرعة</div>
+      <p style="color:#6b6b6b">انسخ أو شارك بالضغط على زر واتساب.</p>
+    </div>
+
+    <div class="share-row">
+      <a id="whatsappBtn" class="share wh" href="#" target="_blank" rel="noopener">شارك على واتساب</a>
+      <a id="copyBtn" class="share copy" href="#">انسخ للنص</a>
+    </div>
+  </div>
+</div>
+
+<!-- modal -->
+<div class="result-modal" id="modal">
+  <div class="card">
+    <h2 id="modalTitle">معاينة الرسالة</h2>
+    <p id="modalBody" style="white-space:pre-wrap;text-align:right"></p>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <button id="sendBtn">نسخ</button>
+      <button class="ghost" id="closeBtn">رجوع</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const message = document.getElementById('message');
+  const preview = document.getElementById('preview');
+  const show = document.getElementById('show');
+  const save = document.getElementById('save');
+  const tips = document.getElementById('tips');
+  const whatsappBtn = document.getElementById('whatsappBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const modal = document.getElementById('modal');
+  const modalBody = document.getElementById('modalBody');
+  const closeBtn = document.getElementById('closeBtn');
+  const sendBtn = document.getElementById('sendBtn');
+  const fileInput = document.getElementById('file');
+  const photo = document.getElementById('photo');
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+
+  // ملف الصورة
+  document.getElementById('photoLabel').addEventListener('click', ()=> fileInput.click());
+  fileInput.addEventListener('change', (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const url = URL.createObjectURL(f);
+    photo.src = url; photo.style.display='block'; photoPlaceholder.style.display='none';
+  });
+
+  // عرض المعاينة
+  show.addEventListener('click', ()=> {
+    const txt = message.value.trim() || 'اسف يا كنوزتي يا حبيبتي';
+    preview.style.display = 'block';
+    preview.textContent = txt;
+    modalBody.textContent = txt;
+    modal.style.display = 'flex';
+  });
+
+  closeBtn.addEventListener('click', ()=> modal.style.display='none');
+
+  // نسخ للحافظة
+  function copyText(t){
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(t).then(()=> alert('تم النسخ — لصق في واتساب أو رسالة') ).catch(()=> { prompt('انسخ النص يدوياً:', t); });
+    } else {
+      prompt('انسخ النص يدوياً:', t);
+    }
+  }
+
+  sendBtn.addEventListener('click', ()=> { copyText(modalBody.textContent); });
+
+  copyBtn.addEventListener('click', (e)=>{
+    e.preventDefault();
+    copyText(message.value.trim() || 'اسف يا كنوزتي يا حبيبتي');
+  });
+
+  // واتساب - استخدام رابط wa.me مع ترميز
+  function urlEncodeUTF8(s){ return encodeURIComponent(s).replace(/'/g,"%27").replace(/"/g,"%22"); }
+  function updateWhatsAppLink(){
+    const txt = message.value.trim() || 'اسف يا كنوزتي يا حبيبتي';
+    const url = 'https://wa.me/?text=' + urlEncodeUTF8(txt);
+    whatsappBtn.href = url;
+  }
+  message.addEventListener('input', updateWhatsAppLink);
+  updateWhatsAppLink();
+
+  // حفظ كملف نصي
+  save.addEventListener('click', ()=>{
+    const txt = message.value.trim() || 'اسف يا كنوزتي يا حبيبتي';
+    const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'رسالة_اعتذار.txt';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // نصائح سريعة
+  tips.addEventListener('click', ()=> {
+    alert('نصيحة قصيرة:\n1) اذكر الغلط بالاسم لو تقدر.\n2) اعرض حل عملي وصغير.\n3) خلي نبرة هادية وصادقة.\nمثال جاهز:\n"اسف يا كنوزتي يا حبيبتي — زعلتك ومش عايز يحصل تاني. حقولك عملت كذا وهتجنب كذا."');
+  });
+</script>
+</body>
+</html>
